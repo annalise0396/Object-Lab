@@ -58,6 +58,7 @@ class Playlist:
 
     def find_by_artist(self, artist_name: str):
         print(f"\nSONGS BY {artist_name.upper()}:") 
+        print("--------------")
     
         results = [song for song in self.songs if song.artist.lower() == artist_name.lower()]
              
