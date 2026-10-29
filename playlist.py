@@ -1,72 +1,86 @@
 import csv
+import os
 
 class Song:
-    def __init__(self, title, artist, duration):
+    def __init__(self, title: str, artist: str, duration: int):
         self.title = title
         self.artist = artist
-        self.duration = int(duration)
+        self.duration = duration 
 
     def __str__(self):
-        return f"'{self.title}' by {self.artist} ({self.duration}s)"
+        minutes = self.duration // 60
+        seconds = self.duration % 60
+        return f"'{self.title}' by {self.artist} ({minutes}:{seconds:02d})"
 
 
 class Playlist:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self.songs = []
 
-    def load_songs(self, filename):
-        try:
-            with open(filename, mode='r', newline='', encoding='utf-8') as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    if row:  
-                        title, artist, duration = row
-                        self.songs.append(Song(title, artist, duration))
-            print(f"loaded songs from {filename}")
-        except FileNotFoundError:
-            print(f"{filename} not found")
-            self.songs.extend([
-                Song("Default Track 1", "Null Pointer", 180),
-                Song("Default Track 2", "The Code Monkeys", 210)
-            ])
-
-    def add_song(self, song):
+    def add_song(self, song: Song):
         self.songs.append(song)
-        print(f"added {song}")
+
+    def load_songs(self, filename: str):
+        if not os.path.exists(filename):
+            print(f"'{filename}' not found.")
+            return
+
+        with open(filename, mode='r', newline='', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            header = next(reader, None)
+            
+            for row in reader:
+                if len(row) == 3:
+                    title, artist, duration = row
+                    try:
+                        self.add_song(Song(title.strip(), artist.strip(), int(duration.strip())))
+                    except ValueError:
+                        print(f"skipping invalid row: {row}")
 
     def print_playlist(self):
-        print(f"\n--- {self.name} ---")
-        for i, song in enumerate(self.songs, 1):
-            print(f"{i}. {song}")
+        print(f"\n{self.name}")
+        print("--------------")
+        if not self.songs:
+            print("the playlist is currently empty.")
+            return
+        for idx, song in enumerate(self.songs, start=1):
+            print(f"{idx}. {song}")
 
     def get_total_duration(self):
-        total = sum(song.duration for song in self.songs)
-        minutes = total // 60
-        seconds = total % 60
-        print(f"\nduration: {minutes}m {seconds}s ({total} seconds)")
-        return total
-
-    def find_by_artist(self, artist_name):
-        found_songs = [song for song in self.songs if song.artist.lower() == artist_name.lower()]
+        total_seconds = sum(song.duration for song in self.songs)
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
         
-        if found_songs:
-            for song in found_songs:
-                print(f"found: {song.title}")
+        print(f"\nTotal Playlist Duration: {hours}h {minutes}m {seconds}s")
+        return total_seconds
+
+    def find_by_artist(self, artist_name: str):
+        print(f"\nSONGS BY {artist_name.upper()}:") 
+    
+        results = [song for song in self.songs if song.artist.lower() == artist_name.lower()]
+             
+        if not results:
+           print(f"no songs by {artist_name}.")
         else:
-            print("no songs found")
-        return found_songs
+            for song in results:
+                print(f"{song}")
 
 
-def main():     
-    playlist = Playlist("My Playlist")     
-    playlist.load_songs("songs.csv")     
-    playlist.add_song(Song("My Fav Song", "Megabytes", 250))     
-    playlist.print_playlist()     
-    playlist.get_total_duration()     
+
+def main():
+
+    playlist = Playlist("My Playlist")
+    playlist.load_songs("songs.csv")
+    playlist.add_song(Song("My Fav Song", "Megabytes", 250))
+    playlist.print_playlist()
+    playlist.get_total_duration()
     playlist.find_by_artist("Null Pointer")
 
 if __name__ == "__main__":
     main()
+
+
 
 
